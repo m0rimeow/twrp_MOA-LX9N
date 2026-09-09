@@ -1,0 +1,119 @@
+#
+# BoardConfig for HUAWEI Honor 9A (MOA-LX9N)
+# MediaTek MT6762V/CR (Helio P22) - Android 10 / EMUI 10.1
+# Values verified against stock RECOVERY.img from MOA-LX9N 10.1.0.173(C185E4R4P1)
+#
+
+LOCAL_PATH := device/huawei/MOA-LX9N
+
+# Architecture
+TARGET_ARCH := arm64
+TARGET_ARCH_VARIANT := armv8-a
+TARGET_CPU_ABI := arm64-v8a
+TARGET_CPU_ABI2 :=
+TARGET_CPU_VARIANT := cortex-a53
+
+TARGET_2ND_ARCH := arm
+TARGET_2ND_ARCH_VARIANT := armv8-a
+TARGET_2ND_CPU_ABI := armeabi-v7a
+TARGET_2ND_CPU_ABI2 := armeabi
+TARGET_2ND_CPU_VARIANT := cortex-a53
+
+TARGET_USES_64_BIT_BINDER := true
+
+# Platform
+TARGET_BOARD_PLATFORM := mt6765
+TARGET_BOOTLOADER_BOARD_NAME := mt6762
+TARGET_NO_BOOTLOADER := true
+BOARD_HAS_MTK_HARDWARE := true
+MTK_HARDWARE := true
+
+# Kernel (from stock RECOVERY.img header, bootimg v2)
+BOARD_KERNEL_BASE := 0x40078000
+BOARD_KERNEL_PAGESIZE := 2048
+BOARD_KERNEL_OFFSET := 0x00008000
+BOARD_RAMDISK_OFFSET := 0x11a88000
+BOARD_SECOND_OFFSET := 0x00f88000
+BOARD_KERNEL_TAGS_OFFSET := 0x07808000
+BOARD_DTB_OFFSET := 0x07808000
+BOARD_KERNEL_CMDLINE := bootopt=64S3,32N2,64N2 androidboot.selinux=permissive androidboot.hardware=mt6765 unmovable_isolate1=2:256M,3:312M,4:348M buildvariant=user
+BOARD_MKBOOTIMG_ARGS := --base $(BOARD_KERNEL_BASE) --pagesize $(BOARD_KERNEL_PAGESIZE) --kernel_offset $(BOARD_KERNEL_OFFSET) --ramdisk_offset $(BOARD_RAMDISK_OFFSET) --second_offset $(BOARD_SECOND_OFFSET) --tags_offset $(BOARD_KERNEL_TAGS_OFFSET) --dtb_offset $(BOARD_DTB_OFFSET)
+
+TARGET_PREBUILT_KERNEL := $(LOCAL_PATH)/prebuilt/Image.gz
+TARGET_PREBUILT_DTB := $(LOCAL_PATH)/prebuilt/dtb.img
+BOARD_INCLUDE_DTB_IN_BOOTIMG := true
+BOARD_KERNEL_IMAGE_NAME := Image.gz
+
+# Partitions (from UPDATE.APP entry table)
+BOARD_BOOTIMAGE_PARTITION_SIZE := 25165824
+BOARD_RECOVERYIMAGE_PARTITION_SIZE := 47185920
+BOARD_FLASH_BLOCK_SIZE := 131072
+
+TARGET_USERIMAGES_USE_EXT4 := true
+TARGET_USERIMAGES_USE_F2FS := true
+
+# File systems
+BOARD_SYSTEMIMAGE_FILE_SYSTEM_TYPE := ext4
+BOARD_VENDORIMAGE_FILE_SYSTEM_TYPE := ext4
+BOARD_USERDATAIMAGE_FILE_SYSTEM_TYPE := f2fs
+TARGET_COPY_OUT_VENDOR := vendor
+
+# Dynamic partitions (system/vendor/odm/hw_product/cust live in super)
+BOARD_SUPER_PARTITION_SIZE := 2977955840
+BOARD_SUPER_PARTITION_GROUPS := huawei_dynamic_partitions
+BOARD_HUAWEI_DYNAMIC_PARTITIONS_PARTITION_LIST := system vendor odm product
+BOARD_HUAWEI_DYNAMIC_PARTITIONS_SIZE := 2977955840
+
+# Recovery
+TARGET_RECOVERY_FSTAB := $(LOCAL_PATH)/recovery/root/etc/recovery.fstab
+BOARD_HAS_NO_SELECT_BUTTON := true
+BOARD_HAS_LARGE_FILESYSTEM := true
+BOARD_SUPPRESS_SECURE_ERASE := true
+
+########
+# TWRP #
+########
+
+# Display - Honor 9A: 6.3" 720x1600
+TW_THEME := portrait_hdpi
+DEVICE_SCREEN_WIDTH := 720
+DEVICE_SCREEN_HEIGHT := 1600
+TW_BRIGHTNESS_PATH := "/sys/class/leds/lcd-backlight/brightness"
+TW_MAX_BRIGHTNESS := 255
+TW_DEFAULT_BRIGHTNESS := 188
+TW_NO_SCREEN_BLANK := true
+TW_NO_SCREEN_TIMEOUT := true
+TW_SCREEN_BLANK_ON_BOOT := true
+TARGET_RECOVERY_PIXEL_FORMAT := "BGRA_8888"
+
+# Input / touchscreen
+# Touch is Huawei THP: kernel has built-in GT1151 driver; userspace needs
+# aptouch_daemon + libthp stack (32-bit, shipped in recovery/root/vendor).
+# Started via init.recovery.mt6765.rc in recovery/root.
+TWRP_EVENT_LOGGING := true
+TWRP_INCLUDE_LOGCAT := true
+TARGET_USES_LOGD := true
+
+# Storage
+TW_HAS_MTP := true
+TW_INTERNAL_STORAGE_PATH := "/data/media"
+TW_INTERNAL_STORAGE_MOUNT_POINT := "data"
+TW_EXTERNAL_STORAGE_PATH := "/external_sd"
+TW_EXTERNAL_STORAGE_MOUNT_POINT := "external_sd"
+TW_DEFAULT_EXTERNAL_STORAGE := true
+
+# Misc
+TW_USE_TOOLBOX := true
+TW_EXCLUDE_TWRPAPP := true
+TW_EXTRA_LANGUAGES := true
+TW_DEFAULT_LANGUAGE := en
+TW_SKIP_COMPATIBILITY_CHECK := true
+TW_INCLUDE_REPACKTOOLS := true
+
+# Crypto disabled for first bring-up build (EMUI FBE needs extra work)
+# TW_INCLUDE_CRYPTO := true
+
+# Prevent anti-rollback / version asserts
+PLATFORM_SECURITY_PATCH := 2099-12-31
+VENDOR_SECURITY_PATCH := 2099-12-31
+PLATFORM_VERSION := 16.1.0

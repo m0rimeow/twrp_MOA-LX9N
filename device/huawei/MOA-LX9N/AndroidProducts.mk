@@ -1,0 +1,5 @@
+PRODUCT_MAKEFILES := \
+    $(LOCAL_DIR)/twrp_MOA-LX9N.mk
+
+COMMON_LUNCH_CHOICES := \
+    twrp_MOA-LX9N-eng

@@ -1,0 +1,7 @@
+firmware/
+output/
+unpacked/
+repack/
+*.img
+!device/**/prebuilt/*.img
+!device/**/recovery/**

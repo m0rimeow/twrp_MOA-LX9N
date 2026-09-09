@@ -1,0 +1,16 @@
+# TWRP recovery.fstab for HUAWEI Honor 9A (MOA-LX9N) - MT6762
+# Based on stock vendor/etc/recovery.fstab from 10.1.0.173(C185E4R4P1)
+
+/system        ext4    /dev/block/platform/bootdevice/by-name/system     flags=display="System";logical
+/vendor        ext4    /dev/block/platform/bootdevice/by-name/vendor     flags=display="Vendor";logical
+/hw_product    ext4    /dev/block/platform/bootdevice/by-name/hw_product flags=display="HW_Product";logical
+/cust          ext4    /dev/block/platform/bootdevice/by-name/cust       flags=display="Cust";logical
+/odm           ext4    /dev/block/platform/bootdevice/by-name/odm        flags=display="Odm";logical
+/data          f2fs    /dev/block/platform/bootdevice/by-name/userdata   flags=display="Data";length=-16384
+/cache         ext4    /dev/block/platform/bootdevice/by-name/cache      flags=display="Cache"
+/metadata      ext4    /dev/block/platform/bootdevice/by-name/metadata   flags=display="Metadata"
+/misc          emmc    /dev/block/platform/bootdevice/by-name/misc       flags=display="Misc"
+/boot          emmc    /dev/block/platform/bootdevice/by-name/boot       flags=backup=1;flashimg=1;display="Boot"
+/recovery      emmc    /dev/block/platform/bootdevice/by-name/recovery   flags=backup=1;flashimg=1;display="Recovery"
+/external_sd   vfat    /dev/block/mmcblk1p1 /dev/block/mmcblk1           flags=display="Micro SDcard";storage;wipeingui;removable;backup=1
+/usb-otg       vfat    /dev/block/sde1 /dev/block/sde                    flags=display="USB-OTG";storage;wipeingui;removable;backup=0
