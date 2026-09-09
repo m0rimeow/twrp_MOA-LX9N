@@ -9,12 +9,12 @@ on:
 
 env:
   DEVICE_TREE_PATH: device/huawei/MOA-LX9N
-  BUILD_TARGET: twrp_MOA-LX9N-eng
+  BUILD_TARGET: omni_MOA-LX9N-eng
   TWRP_BRANCH: twrp-9.0
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-20.04
     timeout-minutes: 360
     steps:
       - name: Free disk space
@@ -31,8 +31,10 @@ jobs:
             curl zlib1g-dev gcc-multilib g++-multilib libc6-dev-i386 libncurses5 \
             lib32ncurses5-dev x11proto-core-dev libx11-dev lib32z1-dev libgl1-mesa-dev \
             libxml2-utils xsltproc unzip fontconfig python3 openjdk-8-jdk ccache bc \
+            python2 libpython2-stdlib libtinfo5 \
             libssl-dev lz4 libncurses5-dev libncursesw5-dev gperf pngcrush schedtool \
-            rsync repo
+            rsync repo && \
+          (sudo ln -sf /usr/bin/python2 /usr/bin/python || true)
 
       - name: Checkout this repo (device tree)
         uses: actions/checkout@v4
@@ -62,7 +64,7 @@ jobs:
       - name: Sync minimal TWRP manifest
         run: |
           mkdir -p ~/twrp && cd ~/twrp
-          repo init -u https://github.com/minimal-manifest-twrp/platform_manifest_twrp_aosp.git -b ${{ env.TWRP_BRANCH }} --depth=1
+          repo init -u https://github.com/minimal-manifest-twrp/platform_manifest_twrp_omni.git -b ${{ env.TWRP_BRANCH }} --depth=1
           repo sync -c -j$(nproc --all) --no-tags --no-clone-bundle
 
       - name: Copy device tree into source
