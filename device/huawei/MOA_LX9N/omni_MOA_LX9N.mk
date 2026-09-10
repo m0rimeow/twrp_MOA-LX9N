@@ -8,8 +8,8 @@ $(call inherit-product, $(SRC_TARGET_DIR)/product/aosp_base.mk)
 # TWRP common (omni tree)
 $(call inherit-product, vendor/omni/config/common.mk)
 
-PRODUCT_DEVICE := MOA-LX9N
-PRODUCT_NAME := omni_MOA-LX9N
+PRODUCT_DEVICE := MOA_LX9N
+PRODUCT_NAME := omni_MOA_LX9N
 PRODUCT_BRAND := HUAWEI
 PRODUCT_MODEL := Honor 9A
 PRODUCT_MANUFACTURER := huawei

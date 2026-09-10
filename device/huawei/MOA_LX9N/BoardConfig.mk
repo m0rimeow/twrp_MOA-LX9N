@@ -4,7 +4,7 @@
 # Values verified against stock RECOVERY.img from MOA-LX9N 10.1.0.173(C185E4R4P1)
 #
 
-LOCAL_PATH := device/huawei/MOA-LX9N
+LOCAL_PATH := device/huawei/MOA_LX9N
 
 # Architecture
 TARGET_ARCH := arm64
@@ -37,11 +37,11 @@ BOARD_SECOND_OFFSET := 0x00f88000
 BOARD_KERNEL_TAGS_OFFSET := 0x07808000
 BOARD_DTB_OFFSET := 0x07808000
 BOARD_KERNEL_CMDLINE := bootopt=64S3,32N2,64N2 androidboot.selinux=permissive androidboot.hardware=mt6765 unmovable_isolate1=2:256M,3:312M,4:348M buildvariant=user
-BOARD_MKBOOTIMG_ARGS := --base $(BOARD_KERNEL_BASE) --pagesize $(BOARD_KERNEL_PAGESIZE) --kernel_offset $(BOARD_KERNEL_OFFSET) --ramdisk_offset $(BOARD_RAMDISK_OFFSET) --second_offset $(BOARD_SECOND_OFFSET) --tags_offset $(BOARD_KERNEL_TAGS_OFFSET) --dtb_offset $(BOARD_DTB_OFFSET)
+# Note: AOSP 9 mkbootimg has no --dtb/--dtb_offset (header v2 came in Android 10),
+# so the dtb is appended by the repack step in the CI workflow instead.
+BOARD_MKBOOTIMG_ARGS := --base $(BOARD_KERNEL_BASE) --pagesize $(BOARD_KERNEL_PAGESIZE) --kernel_offset $(BOARD_KERNEL_OFFSET) --ramdisk_offset $(BOARD_RAMDISK_OFFSET) --second_offset $(BOARD_SECOND_OFFSET) --tags_offset $(BOARD_KERNEL_TAGS_OFFSET)
 
 TARGET_PREBUILT_KERNEL := $(LOCAL_PATH)/prebuilt/Image.gz
-TARGET_PREBUILT_DTB := $(LOCAL_PATH)/prebuilt/dtb.img
-BOARD_INCLUDE_DTB_IN_BOOTIMG := true
 BOARD_KERNEL_IMAGE_NAME := Image.gz
 
 # Partitions (from UPDATE.APP entry table)

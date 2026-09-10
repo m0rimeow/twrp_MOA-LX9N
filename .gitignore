@@ -5,3 +5,4 @@ repack/
 *.img
 !device/**/prebuilt/*.img
 !device/**/recovery/**
+tools/plink.exe

@@ -8,8 +8,8 @@ on:
       - '.github/workflows/**'
 
 env:
-  DEVICE_TREE_PATH: device/huawei/MOA-LX9N
-  BUILD_TARGET: omni_MOA-LX9N-eng
+  DEVICE_TREE_PATH: device/huawei/MOA_LX9N
+  BUILD_TARGET: omni_MOA_LX9N-eng
   TWRP_BRANCH: twrp-9.0
 
 jobs:
@@ -83,14 +83,14 @@ jobs:
       - name: Repack with dtb and stock offsets (header v2)
         run: |
           cd ${{ github.workspace }}
-          OUT=~/twrp/out/target/product/MOA-LX9N
+          OUT=~/twrp/out/target/product/MOA_LX9N
           mkdir -p repack
           bash tools/unpack_img.sh $OUT/recovery.img repack
           # use the built kernel if present, else our prebuilt
-          K=repack/Image.gz; [ -f "$K" ] || K=device/huawei/MOA-LX9N/prebuilt/Image.gz
+          K=repack/Image.gz; [ -f "$K" ] || K=${{ env.DEVICE_TREE_PATH }}/prebuilt/Image.gz
           R=repack/ramdisk.cpio.gz; [ -f "$R" ] || R=repack/ramdisk.cpio.bin
           perl tools/repack_img.pl twrp-3.x-MOA-LX9N.img "$K" "$R" \
-            device/huawei/MOA-LX9N/prebuilt/dtb.img \
+            ${{ env.DEVICE_TREE_PATH }}/prebuilt/dtb.img \
             "bootopt=64S3,32N2,64N2 androidboot.selinux=permissive androidboot.hardware=mt6765 unmovable_isolate1=2:256M,3:312M,4:348M buildvariant=user" \
             0x40078000 2048 0x8000 0x11a88000 0xf88000 0x7808000 0x7808000
           ls -la twrp-3.x-MOA-LX9N.img
@@ -101,4 +101,4 @@ jobs:
           name: twrp-MOA-LX9N
           path: |
             twrp-3.x-MOA-LX9N.img
-            ~/twrp/out/target/product/MOA-LX9N/recovery.img
+            ~/twrp/out/target/product/MOA_LX9N/recovery.img

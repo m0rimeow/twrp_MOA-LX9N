@@ -1,5 +1,0 @@
-PRODUCT_MAKEFILES := \
-    $(LOCAL_DIR)/omni_MOA-LX9N.mk
-
-COMMON_LUNCH_CHOICES := \
-    omni_MOA-LX9N-eng
