@@ -1,0 +1,24 @@
+# Touch bring-up for HUAWEI Honor 9A (MOA-LX9N) TWRP
+# Huawei THP stack: aptouch_daemon drives the GT1151 touch IC through the
+# kernel's hostprocessing interface. Lives in /system/etc/init so AOSP init
+# always parses it, regardless of ro.hardware.
+
+on init
+    symlink /vendor /system/vendor
+
+on boot
+    setprop thp.service_enable 1
+    setprop odm.thp.service_enable 1
+    start aptouch
+
+service aptouch /vendor/bin/aptouch_daemon
+    class main
+    user root
+    group root system shell
+    setenv LD_LIBRARY_PATH /system/lib:/vendor/lib
+
+on property:thp.service_enable=0
+    stop aptouch
+
+on property:odm.thp.service_enable=0
+    stop aptouch

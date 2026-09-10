@@ -80,25 +80,33 @@ jobs:
           lunch ${{ env.BUILD_TARGET }}
           mka recoveryimage -j$(nproc --all)
 
-      - name: Repack with dtb and stock offsets (header v2)
+      - name: Repack into Huawei split-recovery images
         run: |
           cd ${{ github.workspace }}
           OUT=~/twrp/out/target/product/MOA_LX9N
           mkdir -p repack
           bash tools/unpack_img.sh $OUT/recovery.img repack
-          # use the built kernel if present, else our prebuilt
-          K=repack/Image.gz; [ -f "$K" ] || K=${{ env.DEVICE_TREE_PATH }}/prebuilt/Image.gz
           R=repack/ramdisk.cpio.gz; [ -f "$R" ] || R=repack/ramdisk.cpio.bin
-          perl tools/repack_img.pl twrp-3.x-MOA-LX9N.img "$K" "$R" \
+          # 1) TWRP ramdisk -> recovery_ramdisk partition.
+          #    Format matches a known-working image byte-for-byte (header v0,
+          #    ramdisk-only, base 0x10000000).
+          perl tools/pack_ramdisk_img.pl twrp-ramdisk-MOA-LX9N.img "$R" \
+            "buildvariant=eng" 0x10000000 2048 0x1000000 0x100
+          # 2) stock kernel+dtb -> recovery partition (cmdline: permissive,
+          #    androidboot.hardware=mt6765), header v2 like stock.
+          perl tools/repack_img.pl recovery-kernel-MOA-LX9N.img \
+            ${{ env.DEVICE_TREE_PATH }}/prebuilt/Image.gz \
+            ${{ env.DEVICE_TREE_PATH }}/prebuilt/stub-ramdisk.cpio.gz \
             ${{ env.DEVICE_TREE_PATH }}/prebuilt/dtb.img \
             "bootopt=64S3,32N2,64N2 androidboot.selinux=permissive androidboot.hardware=mt6765 unmovable_isolate1=2:256M,3:312M,4:348M buildvariant=user" \
             0x40078000 2048 0x8000 0x11a88000 0xf88000 0x7808000 0x7808000
-          ls -la twrp-3.x-MOA-LX9N.img
+          ls -la twrp-ramdisk-MOA-LX9N.img recovery-kernel-MOA-LX9N.img
 
-      - name: Upload recovery image
+      - name: Upload recovery images
         uses: actions/upload-artifact@v4
         with:
           name: twrp-MOA-LX9N
           path: |
-            twrp-3.x-MOA-LX9N.img
+            twrp-ramdisk-MOA-LX9N.img
+            recovery-kernel-MOA-LX9N.img
             ~/twrp/out/target/product/MOA_LX9N/recovery.img

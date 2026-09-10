@@ -6,3 +6,5 @@ repack/
 !device/**/prebuilt/*.img
 !device/**/recovery/**
 tools/plink.exe
+work/
+last_kmsg.txt
