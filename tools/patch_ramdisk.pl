@@ -3,11 +3,12 @@
 #  - copies every original entry verbatim (preserves modes/devnodes/symlinks)
 #  - replaces init.rc and aptouch_daemon.rc with patched content
 #  - injects the Huawei THP touch stack (aptouch_daemon, tpd, libthp*, 32-bit libs)
-# Usage: perl tools/patch_ramdisk.pl in.cpio.gz out.cpio.gz <device_tree_recovery_root>
+# Usage: perl tools/patch_ramdisk.pl in.cpio.gz out.cpio.gz <device_tree_recovery_root> [manual]
+#   "manual": aptouch service is left disabled (start via: setprop thp.service_enable 1)
 use strict; use warnings;
 
-my ($in, $out, $root) = @ARGV;
-die "usage: in.cpio.gz out.cpio.gz recovery_root_dir\n" unless $root;
+my ($in, $out, $root, $manual) = @ARGV;
+die "usage: in.cpio.gz out.cpio.gz recovery_root_dir [manual]\n" unless $root;
 
 sub slurp { open my $f,"<",$_[0] or die "$_[0]: $!"; binmode $f; local $/; my $d=<$f>; close $f; $d }
 
@@ -46,6 +47,23 @@ on property:thp.service_enable=1
 on property:thp.service_enable=0
     stop aptouch
 EOF
+
+my $aptouch_rc_manual = <<'EOF';
+#tp hostprocessing daemon (manual start: setprop thp.service_enable 1)
+service aptouch /system/vendor/bin/aptouch_daemon
+    user root
+    group root
+    setenv LD_LIBRARY_PATH /system/lib:/system/vendor/lib
+    disabled
+
+on property:thp.service_enable=1
+    start aptouch
+
+on property:thp.service_enable=0
+    stop aptouch
+EOF
+
+$aptouch_rc = $aptouch_rc_manual if $manual;
 
 my $pos = 0;
 my (%seen, $patched_init, $patched_rc);
