@@ -1,0 +1,53 @@
+# Shadow the stock Huawei recovery_vendor services that cannot run under TWRP.
+#
+# LK merges the recovery_vendor ramdisk into ours (lib/ramdisk_merge), so init
+# also parses /vendor/etc/init/init.recovery.huawei.rc, which declares
+#
+#     service oeminfo_nvm /vendor/bin/oeminfo_nvm_server
+#         critical
+#         seclabel u:r:oeminfo_nvm:s0
+#
+# and starts it "on fs". That binary is 32-bit while TWRP's /init.rc exports
+# the 64-bit /sbin as LD_LIBRARY_PATH globally, so it dies with
+# 'CANNOT LINK EXECUTABLE "...": "/sbin/libcutils.so" is 64-bit instead of
+# 32-bit' - exactly what teecd was observed doing every 5s in a live TWRP boot.
+# Its seclabel does not exist in TWRP's sepolicy either. And because the
+# service is *critical*, init reacts to five exits with
+# "panic: rebooting to bootloader", which on this phone is the
+# "Fastboot&Rescue" screen - about 5-8s after the TWRP UI appears, matching
+# five restarts at init's 5s interval.
+#
+# The ported 8.1 ramdisk never hit this: it ships its own oeminfo_nvm pointing
+# at /sbin/oeminfo_nvm_server, which shadows the stock definition (that process
+# was seen alive and idle during a debug boot). Files under /system/etc/init are
+# parsed before /vendor/etc/init, so defining the same names here wins and the
+# stock ones are ignored as duplicates.
+#
+# TWRP needs neither service: oeminfo holds IMEI/serial, and the TEE is only
+# needed for EMUI FBE decryption (TW_INCLUDE_CRYPTO is off). If oeminfo access
+# is ever wanted, point the service at the real binary and give it
+# "setenv LD_LIBRARY_PATH /system/lib:/vendor/lib" instead of stubbing it - but
+# leave out "critical" so a failure can never reboot the device again.
+
+service oeminfo_nvm /sbin/true
+    oneshot
+    disabled
+    seclabel u:r:recovery:s0
+
+service teecd /sbin/true
+    oneshot
+    disabled
+    seclabel u:r:recovery:s0
+
+# adb never came up in this build, which left a failing boot impossible to log.
+# ro.debuggable=1 IS set, but TWRP's "on property:ro.debuggable=1" block has
+# "#start adbd" commented out and instead writes to
+# /sys/class/android_usb/android0/enable - the legacy gadget path, which does
+# not exist here (this device is configfs). So start adbd explicitly.
+# If adb still does not appear, the gadget itself is the problem, not adbd:
+# Huawei's merged init.recovery.mt6765.rc builds its own configfs gadget
+# (idVendor 0x12d1, functionfs at /dev/usb-ffs/adb) and only wires it up on
+# sys.usb.config=manufacture,adb, while TWRP's init.recovery.usb.rc expects
+# sys.usb.config=adb. Two configurators, one gadget - pick one deliberately.
+on boot
+    start adbd
