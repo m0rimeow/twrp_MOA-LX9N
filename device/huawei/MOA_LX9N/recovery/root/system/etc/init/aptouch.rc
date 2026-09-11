@@ -1,7 +1,29 @@
-# Touch bring-up for HUAWEI Honor 9A (MOA-LX9N) TWRP
-# Huawei THP stack: aptouch_daemon drives the GT1151 touch IC through the
-# kernel's hostprocessing interface. Lives in /system/etc/init so AOSP init
-# always parses it, regardless of ro.hardware.
+# Touch bring-up for HUAWEI Honor 9A (MOA-LX9N) TWRP (source-built omni tree).
+# Touch IC is an Ilitek ILI9881H TDDI (project Y163791300) behind Huawei's THP
+# "hostprocessing": the kernel driver only feeds frames to userspace, and
+# aptouch_daemon + libthp + libafehal + libtsa do the touch decoding.
+# Lives in /system/etc/init so AOSP init always parses it, regardless of
+# ro.hardware. The ramdisk-patching path uses the same content, see
+# tools/release_overlay/aptouch_daemon.rc.
+#
+# LK merges the stock recovery_vendor ramdisk into ours (lib/ramdisk_merge), so
+# /vendor already holds aptouch_daemon, libthp, libtsa_v1 and libafehalY16379*.
+#
+# The two things that actually make touch work here (verified on-device):
+#   - hwservicemanager.ready: libthp does a HIDL getService for the sensor
+#     service and libhidlbase polls that property forever ("Waited for
+#     hwservicemanager.ready for a second, waiting another..."), so the daemon
+#     hangs in startListening and never opens /dev/thp (thp_status stuck at
+#     0x1). TWRP has no hwservicemanager; setting the property lets the lookup
+#     fail harmlessly and the daemon proceeds (thp_status 0xc1). The daemon
+#     runs in "upgrade mode" here, where it disables binder/vndbinder anyway.
+#   - LD_LIBRARY_PATH: init exports 64-bit /sbin globally in the ported
+#     ramdisk, which makes 32-bit vendor binaries fail to link. Setting it per
+#     service keeps aptouch_daemon on the 32-bit libs.
+# The recovery kernel boots with androidboot.selinux=enforcing, hence seclabel.
+
+on early-init
+    setprop hwservicemanager.ready true
 
 on init
     symlink /vendor /system/vendor
@@ -12,10 +34,10 @@ on boot
     start aptouch
 
 service aptouch /vendor/bin/aptouch_daemon
-    class main
     user root
-    group root system shell
+    group root
     setenv LD_LIBRARY_PATH /system/lib:/vendor/lib
+    seclabel u:r:recovery:s0
 
 on property:thp.service_enable=0
     stop aptouch
