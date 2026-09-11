@@ -1,0 +1,22 @@
+# DEBUG image: the THP touch daemon never autostarts.
+# LK merges the stock recovery_vendor ramdisk into ours (lib/ramdisk_merge),
+# so init also parses /vendor/etc/init/aptouch_daemon.rc, which does
+# "on boot start aptouch". This file is imported from /init.rc and parsed
+# first, so it owns the "aptouch" name: the stock definition is ignored as a
+# duplicate and its start commands only run /sbin/true.
+service aptouch /sbin/true
+    oneshot
+    disabled
+    seclabel u:r:recovery:s0
+
+# Real daemon, run once under a logging wrapper:
+#   adb shell setprop debug.thp.start 1
+service thpdbg /sbin/sh /sbin/thpdbg.sh
+    user root
+    group root
+    oneshot
+    disabled
+    seclabel u:r:recovery:s0
+
+on property:debug.thp.start=1
+    start thpdbg
