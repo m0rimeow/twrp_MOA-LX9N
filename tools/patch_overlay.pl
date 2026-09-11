@@ -1,14 +1,18 @@
 #!/usr/bin/perl
-# Turn a touch-patched TWRP ramdisk into a debug ramdisk (newc cpio, gzipped):
+# Overlay files onto a newc cpio ramdisk (gzipped), keeping every other entry
+# verbatim:
 #  - every file under <overlay_dir> replaces (keeping its mode) or is added
 #    to the archive at the same relative path
-#  - init.rc: panic_on_oops 1 -> 0, so a THP driver oops leaves adb alive
-# Usage: perl tools/patch_debug.pl in.cpio.gz out.cpio.gz tools/debug_overlay
+#  - with <panic_on_oops> given, init.rc's "write /proc/sys/kernel/panic_on_oops"
+#    is set to that value (0 keeps adb alive through a driver oops, for debugging)
+# Usage: perl tools/patch_overlay.pl in.cpio.gz out.cpio.gz overlay_dir [panic_on_oops]
 use strict; use warnings;
 use File::Find;
 
-my ($in, $out, $overlay) = @ARGV;
-die "usage: in.cpio.gz out.cpio.gz overlay_dir\n" unless $overlay && -d $overlay;
+my ($in, $out, $overlay, $panic) = @ARGV;
+die "usage: in.cpio.gz out.cpio.gz overlay_dir [panic_on_oops]\n"
+    unless $overlay && -d $overlay;
+die "panic_on_oops must be 0 or 1\n" if defined $panic && $panic !~ /^[01]$/;
 
 sub slurp { open my $f,"<",$_[0] or die "$_[0]: $!"; binmode $f; local $/; my $d=<$f>; close $f; $d }
 
@@ -55,14 +59,15 @@ while ($pos + 110 <= length $data) {
     if (exists $ov{$name}) {
         $content = $ov{$name};
         print "replaced $name\n";
-    } elsif ($name eq "init.rc") {
-        $content =~ s{^(\s*write /proc/sys/kernel/panic_on_oops) 1$}{$1 0}m
+    } elsif (defined $panic && $name eq "init.rc") {
+        $content =~ s{^(\s*write /proc/sys/kernel/panic_on_oops) [01]$}{$1 $panic}m
             or die "init.rc: panic_on_oops line not found\n";
         $patched_init = 1;
+        print "init.rc: panic_on_oops $panic\n";
     }
     emit($name, $mode, $content, $nlink);
 }
-die "init.rc not found\n" unless $patched_init;
+die "init.rc not found\n" if defined $panic && !$patched_init;
 
 for my $name (sort keys %ov) {
     next if $seen{$name};

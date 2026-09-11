@@ -1,0 +1,46 @@
+# Touch bring-up for HUAWEI Honor 9A (MOA-LX9N) TWRP.
+# Touch IC is an Ilitek ILI9881H TDDI (project Y163791300) behind Huawei's THP
+# "hostprocessing": the kernel driver only feeds frames to userspace, and
+# aptouch_daemon + libthp + libafehal + libtsa do the actual touch decoding.
+#
+# LK merges the stock recovery_vendor ramdisk into ours (lib/ramdisk_merge), so
+# /vendor already holds aptouch_daemon, libthp, libtsa_v1 and libafehalY16379*,
+# and init also parses the stock /vendor/etc/init/aptouch_daemon.rc. This file
+# is imported from /init.rc and therefore parsed first, so these definitions
+# win and the stock ones are ignored as duplicates.
+#
+# Two things the stock rc cannot give us in TWRP:
+#   - LD_LIBRARY_PATH: /init.rc exports /sbin globally and those libs are
+#     64-bit, so a 32-bit vendor binary dies with
+#     'CANNOT LINK EXECUTABLE: "/sbin/libcutils.so" is 64-bit instead of 32-bit'.
+#   - hwservicemanager.ready: libthp does a HIDL getService for the sensor
+#     service, and libhidlbase polls that property forever ("Waited for
+#     hwservicemanager.ready for a second, waiting another..."). TWRP has no
+#     hwservicemanager, so set it ourselves: the lookup then fails harmlessly
+#     and the daemon proceeds to open /dev/thp. The daemon runs in "upgrade
+#     mode" here, where it disables binder/vndbinder anyway.
+# The recovery kernel boots with androidboot.selinux=enforcing, hence seclabel.
+
+on early-init
+    setprop hwservicemanager.ready true
+
+on boot
+    setprop odm.thp.service_enable 1
+    start aptouch
+
+service aptouch /vendor/bin/aptouch_daemon
+    user root
+    group root
+    setenv LD_LIBRARY_PATH /system/lib:/vendor/lib
+    seclabel u:r:recovery:s0
+
+on property:odm.thp.service_enable=0
+    stop aptouch
+
+# Huawei's teecd hits the same 64-bit /sbin problem and can never link here,
+# so the stock rc's "start teecd" fork-crashes every 5s for the whole session.
+# Touch does not need the TEE, so claim the name with a no-op.
+service teecd /sbin/true
+    oneshot
+    disabled
+    seclabel u:r:recovery:s0
